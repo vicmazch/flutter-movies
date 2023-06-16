@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sec_twelve_app/config/constants/environment.dart';
 
 
 class HomeScreen extends StatelessWidget {
@@ -12,7 +13,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Home Screen'),
       ),
-      body: const Placeholder(),
+      body: Center(child: Text(Enviroment.theMovieDBKey),),
     );
   }
 }
