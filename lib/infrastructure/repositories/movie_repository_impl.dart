@@ -4,11 +4,11 @@ import 'package:sec_twelve_app/domain/datasources/movies_datasource.dart';
 import 'package:sec_twelve_app/domain/entities/movie.dart';
 import 'package:sec_twelve_app/domain/repositories/movies_repository.dart';
 
-class MovieRepositoryImp extends MoviesRepository {
+class MovieRepositoryImpl extends MoviesRepository {
 
   final MoviesDatasource datasource;
 
-  MovieRepositoryImp(this.datasource);
+  MovieRepositoryImpl(this.datasource);
 
   @override
   Future<List<Movie>> getNowPlaying({int page = 1}) {

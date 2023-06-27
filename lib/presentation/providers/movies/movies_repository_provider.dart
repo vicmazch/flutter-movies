@@ -7,5 +7,5 @@ import 'package:sec_twelve_app/infrastructure/repositories/movie_repository_impl
 
 // * REPOSITORIO INMUTABLE
 final movieRepositoryProvider = Provider((ref) {
-  return MovieRepositoryImp( MovieDbDatasourceImpl() );
+  return MovieRepositoryImpl( MovieDbDatasourceImpl() );
 });
