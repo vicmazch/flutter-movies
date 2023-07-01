@@ -11,19 +11,27 @@ import 'package:sec_twelve_app/domain/entities/movie.dart';
 typedef SearchMovieCallback = Future<List<Movie>> Function( String query );
 
 class SearchMovieDelegate extends SearchDelegate<Movie?> {
-
+  List<Movie> initialMovies;
   final SearchMovieCallback searchMovies;
+  
   StreamController<List<Movie>> debounceMovie = StreamController.broadcast();
+  StreamController<bool> isLoadingStream = StreamController.broadcast();
+  
   Timer? _debounceTimer;
 
   SearchMovieDelegate({
-    required this.searchMovies
-  });
+    required this.initialMovies,
+    required this.searchMovies,
+  }): super(
+    searchFieldLabel: 'Buscar películas'
+  ) ;
 
   void _clearStream() {
     debounceMovie.close();
   }
   void _onQueryChanged( String query ){
+
+    isLoadingStream.add(true);
 
     debugPrint( 'Query string cambio... ');
 
@@ -34,28 +42,51 @@ class SearchMovieDelegate extends SearchDelegate<Movie?> {
     _debounceTimer = Timer( const Duration(milliseconds: 500), () async {
       debugPrint( 'Buscando peliculas... ');
 
-      if( query.isEmpty ) {
-        debounceMovie.add([]);
-      }
+      // if( query.isEmpty ) {
+      //   debounceMovie.add([]);
+      //   return;
+      // }
       
       final movies = await searchMovies(query);
+      
+      initialMovies = movies;
       debounceMovie.add(movies);
+      isLoadingStream.add(false);
     } );
   }
 
-  @override
-  String get searchFieldLabel => 'Buscar película';
+  // @override
+  // String get searchFieldLabel => 'Buscar película';
 
   @override
   List<Widget>? buildActions(BuildContext context) {
     return [
-      FadeIn(
-        animate: query.isNotEmpty,
-        child: IconButton(
-          onPressed: () => query = '', 
-          icon: const Icon(Icons.clear_rounded)
-        ),
-      ),
+      StreamBuilder(
+        initialData: false,
+        stream: isLoadingStream.stream,
+        builder: (context, snapshot) {
+          final isloading = snapshot.data;
+
+          return (!isloading! 
+            ? FadeIn(
+              animate: query.isNotEmpty,
+              child: IconButton(
+                onPressed: () => query = '', 
+                icon: const Icon(Icons.clear_rounded)
+              ),
+            )
+          : SpinPerfect(
+              duration: const Duration(seconds: 10),
+              spins: 10,
+              infinite: true,
+              child: IconButton(
+                onPressed: () => query = '', 
+                icon: const Icon(Icons.refresh_outlined)
+              ),
+            )
+          );
+        },
+      )
     ];
   }
 
@@ -69,31 +100,36 @@ class SearchMovieDelegate extends SearchDelegate<Movie?> {
 
   @override
   Widget buildResults(BuildContext context) {
-    return const Text('buildResults');
+    return _buildResultsAndSuggestions();
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
     _onQueryChanged(query);
     // return FutureBuilder(
-    return StreamBuilder(
-      // future: searchMovies(query),
-      stream: debounceMovie.stream,
-      builder: (context, snapshot) {
-        final movies = snapshot.data ?? [];
-        return ListView.builder(
-          itemCount: movies.length,
-          itemBuilder: (context, index) {
-            final movie = movies[index];
+    return _buildResultsAndSuggestions();
+  }
 
-            return _MovieItem(movie: movie, onMovieSelected: (context, movie) {
-              _clearStream();
-              close(context, movie);
-            },);
-          },
-        );
-      },
-    );
+  StreamBuilder<List<Movie>> _buildResultsAndSuggestions() {
+    return StreamBuilder(
+    // future: searchMovies(query),
+    initialData: initialMovies,
+    stream: debounceMovie.stream,
+    builder: (context, snapshot) {
+      final movies = snapshot.data ?? [];
+      return ListView.builder(
+        itemCount: movies.length,
+        itemBuilder: (context, index) {
+          final movie = movies[index];
+
+          return _MovieItem(movie: movie, onMovieSelected: (context, movie) {
+            _clearStream();
+            close(context, movie);
+          },);
+        },
+      );
+    },
+  );
   }
   
 }
