@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sec_twelve_app/presentation/delegates/search_movie_delegate.dart';
+import 'package:sec_twelve_app/presentation/providers/providers.dart';
 
-class CustomAppBar extends StatelessWidget {
+class CustomAppBar extends ConsumerWidget {
   const CustomAppBar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
 
     final colors = Theme.of(context).colorScheme;
     final titleStyle = Theme.of(context).textTheme.titleMedium;
@@ -22,7 +26,25 @@ class CustomAppBar extends StatelessWidget {
               Text('Cinemierda...', style: titleStyle,),
               const Spacer(),
               IconButton(
-                onPressed: () => {}, 
+                onPressed: () async {
+
+                  final movieRepository = ref.read(movieRepositoryProvider);
+                  final searchQuery = ref.read(searchQueryProvider);
+                  
+                  showSearch(
+                    query: searchQuery,
+                    context: context, 
+                    delegate: SearchMovieDelegate(
+                      searchMovies: ( query ) {
+                        ref.read(searchQueryProvider.notifier).update((state) => query);
+                        return movieRepository.searchMovie(query);
+                      },)
+                  ).then((movie) {
+                    if( movie == null ) return;
+
+                    context.push('/movie/${ movie.id }');
+                  },);
+                }, 
                 icon: const Icon(Icons.search)
               )
             ],
