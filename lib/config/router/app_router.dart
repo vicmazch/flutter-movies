@@ -5,12 +5,15 @@ import 'package:go_router/go_router.dart';
 import 'package:sec_twelve_app/presentation/screens/screens.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/home/0',
   routes: [
     GoRoute(
-      path: '/',
+      path: '/home/:page',
       name: HomeScreen.name,
-      builder: (context, state) => const HomeScreen(),
+      builder: (context, state) {
+        final pageIndex = int.parse(state.pathParameters['page'] ?? '0');
+        return HomeScreen(pageIndex: pageIndex,);
+      },
       routes: [
         GoRoute(
           path: 'movie/:id',
@@ -22,5 +25,11 @@ final appRouter = GoRouter(
 
       ]
     ),
+
+    // * DEFAULT-REDIRECT
+    GoRoute(
+      path: '/',
+      redirect: (_, __) => '/home/0',
+    )
   ]
 );
