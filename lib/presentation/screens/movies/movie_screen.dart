@@ -193,7 +193,7 @@ class _ActorsByMovie extends ConsumerWidget {
   }
 }
 
-class _CustomSilverAppBar extends StatelessWidget {
+class _CustomSilverAppBar extends ConsumerWidget {
   final Movie movie;
 
   const _CustomSilverAppBar({
@@ -202,14 +202,31 @@ class _CustomSilverAppBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
 
     final size = MediaQuery.of(context).size;
+    final AsyncValue isfavoriteFuture = ref.watch( isFavoriteProvider(movie.id) );
 
     return SliverAppBar(
       backgroundColor: Colors.black,
       expandedHeight: size.height * 0.7,
       foregroundColor: Colors.white,
+      actions: [
+        IconButton(
+          onPressed: () async {
+            // ref.read( localStorageRepositoryProvider ).toggleFavorite(movie),
+            await ref.read( favoriteMoviesProvider.notifier ).toggleFavorite(movie);
+            ref.invalidate(isFavoriteProvider(movie.id));
+          }, 
+          icon: isfavoriteFuture.when(
+            data: (isFavorite) => isFavorite
+              ? Icon(Icons.favorite_rounded, color: Colors.pink.shade700, size: 27,)
+              : const Icon(Icons.favorite_border_outlined, size: 27,), 
+            error: (_, __) => throw UnimplementedError(), 
+            loading: () => const CircularProgressIndicator()
+          )
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           children: [
@@ -224,35 +241,18 @@ class _CustomSilverAppBar extends StatelessWidget {
               ),
             ),
 
-            const SizedBox.expand(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: [ 0.7, 1.0 ],
-                    colors: [
-                      Colors.transparent,
-                      Colors.black87
-                    ]
-                  )
-                )
-              ),
+            const _CustomGradient(
+              begin: Alignment.bottomCenter, 
+              end: Alignment.center, 
+              colors: [Colors.black38, Colors.transparent], 
+              stops: [0.0, 0.5],
             ),
 
-            const SizedBox.expand(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    stops: [ 0.0, 0.4 ],
-                    colors: [
-                      Colors.black87,
-                      Colors.transparent,
-                    ]
-                  )
-                )
-              ),
+            const _CustomGradient(
+              begin: Alignment.topCenter, 
+              end: Alignment.center, 
+              colors: [Colors.black87, Colors.transparent, ], 
+              stops: [0.0, 0.6],
             ),
           ]
         ),
@@ -262,6 +262,36 @@ class _CustomSilverAppBar extends StatelessWidget {
           style: TextStyle( fontSize: 20),
           textAlign: TextAlign.start,
         ),
+      ),
+    );
+  }
+}
+
+class _CustomGradient extends StatelessWidget {
+  final AlignmentGeometry begin;
+  final AlignmentGeometry end;
+  final List<double> stops;
+  final List<Color> colors;
+  
+  const _CustomGradient({
+    required this.begin, 
+    required this.end, 
+    required this.stops, 
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.expand(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: begin,
+            end: end,
+            stops: stops,
+            colors: colors
+          )
+        )
       ),
     );
   }
